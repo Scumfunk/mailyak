@@ -54,7 +54,7 @@ func (m *MailYak) buildMimeWithBoundaries(mb, ab string) (*bytes.Buffer, error) 
 	}
 	defer mixed.Close()
 
-	fmt.Fprintf(&buf, "Content-Type: multipart/mixed;\r\n\tboundary=\"%s\"; charset=UTF-8\r\n\r\n", mixed.Boundary())
+	fmt.Fprintf(&buf, "Content-Type: multipart/related;\r\n\tboundary=\"%s\"; charset=UTF-8\r\n\r\n", mixed.Boundary())
 
 	ctype := fmt.Sprintf("multipart/alternative;\r\n\tboundary=\"%s\"", ab)
 

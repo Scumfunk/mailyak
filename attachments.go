@@ -103,8 +103,8 @@ func (m *MailYak) writeAttachments(mixed partCreator, splitter writeWrapper) err
 	h := make([]byte, sniffLen)
 
 	for _, item := range m.attachments {
-		hLen, err := io.ReadFull(item.content, h)
-		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		hLen, err := item.content.Read(h)
+		if err != nil && err != io.EOF {
 			return err
 		}
 
@@ -112,7 +112,7 @@ func (m *MailYak) writeAttachments(mixed partCreator, splitter writeWrapper) err
 			item.mimeType = http.DetectContentType(h[:hLen])
 		}
 
-		ctype := fmt.Sprintf("%s;\n\tfilename=%q", item.mimeType, item.filename)
+		ctype := fmt.Sprintf("%s;\n\tname=%q", item.mimeType, item.filename)
 
 		part, err := mixed.CreatePart(getMIMEHeader(item, ctype))
 		if err != nil {
@@ -142,17 +142,19 @@ func (m *MailYak) writeAttachments(mixed partCreator, splitter writeWrapper) err
 func getMIMEHeader(a attachment, ctype string) textproto.MIMEHeader {
 	var disp string
 	var header textproto.MIMEHeader
+	cid := fmt.Sprintf("<%s>", a.filename)
 
 	if a.inline {
 		disp = fmt.Sprintf("inline;\n\tfilename=%q", a.filename)
 		header = textproto.MIMEHeader{
 			"Content-Type":              {ctype},
-			"Content-Disposition":       {disp},
+			//"Content-Disposition":       {disp},
 			"Content-Transfer-Encoding": {"base64"},
+			"Content-ID":                {cid},
+			"X-Attachment-Id": {a.filename},
 		}
 	} else {
 		disp = fmt.Sprintf("attachment;\n\tfilename=%q", a.filename)
-		cid := fmt.Sprintf("<%s>", a.filename)
 		header = textproto.MIMEHeader{
 			"Content-Type":              {ctype},
 			"Content-Disposition":       {disp},
